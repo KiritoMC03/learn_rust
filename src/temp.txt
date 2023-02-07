@@ -1,0 +1,47 @@
+use libm::{log10};
+
+static mut COUNT : [usize; 10] = [0; 10];
+static mut TEMP : Vec<i32> = Vec::new();
+
+pub fn alloc_temp(target_len: usize) {
+    unsafe {
+        if TEMP.len() < target_len { TEMP = Vec::with_capacity(target_len); }
+    };
+}
+
+pub fn f_lsd_sort(arr: &mut [i32]) {
+    unsafe {
+        for item in COUNT.iter_mut() { *item = 0; }
+        if TEMP.len() < arr.len() { TEMP.resize(arr.len(), 0); }
+    };
+
+    let max_val = *arr.iter().max().unwrap();
+    let steps : i32 = log10(max_val as f64) as i32 + 1i32;
+
+    for step in 1..steps+1 {
+        count_sort(arr, step);
+    }
+}
+
+fn count_sort(arr: &mut [i32], exp: i32) {
+    for item in arr.iter() {
+        unsafe { COUNT[((item / exp) % 10) as usize] += 1; }
+    }
+
+    for i in 1..10 {
+        unsafe { COUNT[i] += COUNT[i - 1]; }
+    }
+
+    let mut index;
+    for item in arr.iter().rev() {
+        index = ((item / exp) % 10) as usize;
+        unsafe {
+            TEMP[COUNT[index] - 1] = *item;
+            COUNT[index] -= 1;
+        }
+    }
+
+    for i in 0..arr.len() {
+        unsafe { arr[i] = TEMP[i]; }
+    }
+}
